@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>月光河互動小遊戲</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="stage" aria-labelledby="game-title">
+        <div class="sky" aria-hidden="true">
+          <div class="moon"></div>
+          <div class="stars star-a"></div>
+          <div class="stars star-b"></div>
+          <div class="stars star-c"></div>
+          <div class="river">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="friends">
+            <span class="friend rabbit"></span>
+            <span class="friend monkey"></span>
+            <span class="friend elephant"></span>
+          </div>
+        </div>
+
+        <header class="hero">
+          <p class="eyebrow">第七課</p>
+          <h1 id="game-title">月光河互動小遊戲</h1>
+          <p class="intro">陪小白兔和森林朋友完成閱讀、識字、句型與聆聽挑戰。</p>
+          <button class="primary" id="start-button" type="button">開始遊戲</button>
+        </header>
+      </section>
+
+      <section class="game-panel" id="game-panel" hidden>
+        <div class="topbar">
+          <div>
+            <p class="label">目前關卡</p>
+            <h2 id="level-title">故事排序</h2>
+          </div>
+          <div class="scoreboard" aria-live="polite">
+            <span id="progress">1 / 6</span>
+            <strong id="score">0 分</strong>
+          </div>
+        </div>
+
+        <div class="progress-track" aria-hidden="true">
+          <div id="progress-fill"></div>
+        </div>
+
+        <div class="prompt" id="prompt"></div>
+        <div class="play-area" id="play-area"></div>
+
+        <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+
+        <div class="actions">
+          <button class="ghost" id="hint-button" type="button">提示</button>
+          <button class="secondary" id="check-button" type="button">檢查答案</button>
+          <button class="primary" id="next-button" type="button" disabled>下一關</button>
+        </div>
+      </section>
+
+      <section class="result-panel" id="result-panel" hidden>
+        <p class="eyebrow">完成任務</p>
+        <h2>月光河亮起來了！</h2>
+        <p id="result-copy"></p>
+        <div class="result-grid" id="result-grid"></div>
+        <button class="primary" id="restart-button" type="button">再玩一次</button>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
