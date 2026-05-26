@@ -48,6 +48,15 @@ button:disabled {
   padding: 24px 0;
 }
 
+.site-credit {
+  margin: 14px 0 0;
+  color: rgba(38, 50, 56, 0.72);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: center;
+}
+
 .stage {
   position: relative;
   min-height: min(720px, calc(100vh - 48px));
@@ -506,6 +515,11 @@ select {
   .shell {
     width: min(100% - 20px, 1120px);
     padding: 10px 0;
+  }
+
+  .site-credit {
+    margin-top: 10px;
+    font-size: 0.8rem;
   }
 
   .stage {
