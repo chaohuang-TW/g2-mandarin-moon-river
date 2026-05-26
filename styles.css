@@ -57,6 +57,10 @@ button:disabled {
   text-align: center;
 }
 
+.site-credit p {
+  margin: 4px 0;
+}
+
 .stage {
   position: relative;
   min-height: min(720px, calc(100vh - 48px));
