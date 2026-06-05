@@ -30,7 +30,10 @@
           <p class="eyebrow">第七課</p>
           <h1 id="game-title">月光河互動小遊戲</h1>
           <p class="intro">陪小白兔和森林朋友完成閱讀、識字、句型與聆聽挑戰。</p>
-          <button class="primary" id="start-button" type="button">開始遊戲</button>
+          <div class="hero-actions">
+            <button class="primary" id="start-button" type="button">開始遊戲</button>
+            <button class="listen-button" id="story-button" type="button">先聽故事</button>
+          </div>
         </header>
       </section>
 
@@ -63,6 +66,7 @@
       </section>
 
       <section class="result-panel" id="result-panel" hidden>
+        <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
         <p class="eyebrow">完成任務</p>
         <h2>月光河亮起來了！</h2>
         <p id="result-copy"></p>
