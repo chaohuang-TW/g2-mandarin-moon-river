@@ -1,7 +1,10 @@
 const levels = [
   {
+    id: "order",
+    icon: "序",
+    kicker: "關卡一｜故事排序",
     type: "order",
-    title: "故事排序",
+    title: "月光河故事拼圖",
     prompt: "把〈月光河〉的故事排成正確順序。",
     hint: "先找背景，再找小白兔生病，最後是大家幫他看見月亮。",
     summary: "故事排序要抓住起因、經過和結果，讀故事時可以先找時間和事件順序。",
@@ -16,8 +19,11 @@ const levels = [
     shuffled: [1, 3, 0, 5, 2, 4]
   },
   {
+    id: "radical",
+    icon: "首",
+    kicker: "關卡二｜部首連連看",
     type: "match",
-    title: "部首連連看",
+    title: "森林生字研究所",
     prompt: "選出每個生字正確的部首。",
     hint: "猴的部首是犬部，病看起來像病床，所以是疒部。",
     summary: "部首能幫我們理解字義，例如犬部常和動物有關，疒部常和生病有關。",
@@ -32,8 +38,11 @@ const levels = [
     options: ["示部", "犬部", "疒部", "手部", "骨部", "言部", "木部", "心部"]
   },
   {
+    id: "family",
+    icon: "昔",
+    kicker: "關卡三｜昔字家族",
     type: "family",
-    title: "昔字家族",
+    title: "昔字魔法樹",
     prompt: "把「昔」加上正確部首，變成句子需要的字。",
     hint: "可惜的惜有心情，弄錯的錯和金屬旁有關。",
     summary: "同一個字件加上不同部首，會變成不同的字，也常帶出不同意思。",
@@ -46,8 +55,11 @@ const levels = [
     options: ["借", "醋", "錯", "惜"]
   },
   {
+    id: "tone",
+    icon: "氣",
+    kicker: "關卡四｜語氣判斷",
     type: "quiz",
-    title: "語氣判斷",
+    title: "一定或可能",
     prompt: "讀句子，選出比較適合的詞語。",
     hint: "一定表示很確定；可能表示不確定。",
     summary: "「一定」表示很確定，「可能」表示還不確定，說話語氣不一樣。",
@@ -70,8 +82,11 @@ const levels = [
     ]
   },
   {
+    id: "sentence",
+    icon: "句",
+    kicker: "關卡五｜句型重組",
     type: "sentence",
-    title: "句子重組",
+    title: "除了……都……小橋",
     prompt: "用「除了……都……」把句子排好。",
     hint: "句型是：除了 + 特別的人或事，其他的人 + 都 + 做某件事。",
     summary: "「除了……都……」可以說出一個例外，再說其他人或事都有相同情況。",
@@ -79,8 +94,11 @@ const levels = [
     bank: ["都", "生病請假", "文欣", "參加了運動會", "除了", "我們"]
   },
   {
+    id: "listen",
+    icon: "聽",
+    kicker: "關卡六｜聆聽理解",
     type: "quiz",
-    title: "聆聽理解",
+    title: "朋友電話任務",
     prompt: "根據家明打電話給智文的情境，回答問題。",
     hint: "想一想：誰沒來上學？誰打電話關心朋友？",
     summary: "聆聽時要抓住人物、原因和行動，才能知道故事中誰在關心誰。",
@@ -112,13 +130,16 @@ const storyText = [
   "池塘裡也有很多圓圓的月亮，和月光河的一模一樣。小白兔很高興，跟大家在小池塘邊，度過了快樂的夜晚。"
 ].join(" ");
 
+const hero = document.querySelector(".hero");
 const startButton = document.querySelector("#start-button");
 const storyButton = document.querySelector("#story-button");
 const restartButton = document.querySelector("#restart-button");
 const gamePanel = document.querySelector("#game-panel");
 const resultPanel = document.querySelector("#result-panel");
-const stage = document.querySelector(".stage");
+const trail = document.querySelector("#trail");
+const levelKicker = document.querySelector("#level-kicker");
 const levelTitle = document.querySelector("#level-title");
+const levelVisual = document.querySelector("#level-visual");
 const progress = document.querySelector("#progress");
 const scoreLabel = document.querySelector("#score");
 const progressFill = document.querySelector("#progress-fill");
@@ -137,15 +158,18 @@ let score = 0;
 let answered = false;
 let orderState = [];
 let sentenceState = [];
+let completed = new Set();
 let audioContext;
 let storySpeaking = false;
+let draggedIndex = null;
 
 function startGame() {
   stopStory();
   current = 0;
   score = 0;
   answered = false;
-  stage.hidden = true;
+  completed = new Set();
+  hero.hidden = true;
   resultPanel.hidden = true;
   gamePanel.hidden = false;
   renderLevel();
@@ -217,17 +241,18 @@ function playTone(kind) {
 
 function renderLevel() {
   const level = levels[current];
-  answered = false;
+  answered = completed.has(level.id);
+  levelKicker.textContent = level.kicker;
   levelTitle.textContent = level.title;
-  progress.textContent = `${current + 1} / ${levels.length}`;
-  scoreLabel.textContent = `${score} 分`;
-  progressFill.style.width = `${((current + 1) / levels.length) * 100}%`;
   promptBox.textContent = level.prompt;
-  feedback.textContent = "";
-  feedback.className = "feedback";
-  nextButton.disabled = true;
-  checkButton.disabled = false;
+  feedback.textContent = answered ? `這關已完成。學習重點：${level.summary}` : "";
+  feedback.className = answered ? "feedback good" : "feedback";
+  nextButton.disabled = !answered;
+  checkButton.disabled = answered;
   playArea.innerHTML = "";
+  renderScore();
+  renderTrail();
+  renderLevelVisual(level);
 
   if (level.type === "order") renderOrder(level);
   if (level.type === "match") renderMatch(level);
@@ -236,10 +261,97 @@ function renderLevel() {
   if (level.type === "sentence") renderSentence(level);
 }
 
+function renderScore() {
+  progress.textContent = `${current + 1} / ${levels.length}`;
+  scoreLabel.textContent = `${score} 分`;
+  progressFill.style.width = `${((completed.size + 0.12) / levels.length) * 100}%`;
+}
+
+function renderTrail() {
+  trail.innerHTML = "";
+  levels.forEach((level, index) => {
+    const button = document.createElement("button");
+    button.className = "stage-tab";
+    if (index === current) button.classList.add("is-active");
+    if (completed.has(level.id)) button.classList.add("is-done");
+    button.type = "button";
+    button.innerHTML = `
+      <span class="badge-icon">${level.icon}</span>
+      <span>${level.title}<small>${level.kicker.replace("｜", " ")}</small></span>
+      <span class="checkmark">${completed.has(level.id) ? "✓" : ""}</span>
+    `;
+    button.addEventListener("click", () => {
+      current = index;
+      renderLevel();
+    });
+    trail.appendChild(button);
+  });
+}
+
+function renderLevelVisual(level) {
+  const scenes = {
+    order: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="月光河故事卡片">
+        <defs><linearGradient id="river" x1="0" x2="1"><stop stop-color="#2f8f9d"/><stop offset="1" stop-color="#9dd8dd"/></linearGradient></defs>
+        <rect width="820" height="210" fill="#eaf6f5"/><circle cx="690" cy="48" r="34" fill="#ffd76a"/>
+        <path d="M0 154 C130 115 250 188 390 146 C520 108 650 132 820 92 L820 210 L0 210Z" fill="url(#river)"/>
+        <path d="M58 86 C84 54 128 56 150 92 C126 86 92 86 58 86Z" fill="#4f8a56"/>
+        <g transform="translate(168 48)"><rect width="96" height="82" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="48" y="52" text-anchor="middle" font-size="36" fill="#176672">1</text></g>
+        <g transform="translate(288 35)"><rect width="96" height="82" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="48" y="52" text-anchor="middle" font-size="36" fill="#176672">2</text></g>
+        <g transform="translate(408 58)"><rect width="96" height="82" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="48" y="52" text-anchor="middle" font-size="36" fill="#176672">3</text></g>
+        <g transform="translate(532 42)"><rect width="96" height="82" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="48" y="52" text-anchor="middle" font-size="36" fill="#176672">4</text></g>
+      </svg>`,
+    radical: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="部首研究所">
+        <rect width="820" height="210" fill="#eef7f1"/><path d="M0 160 C160 130 278 180 428 150 C568 122 670 130 820 102 L820 210 L0 210Z" fill="#d8efe6"/>
+        <g transform="translate(56 42)"><rect width="132" height="110" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="66" y="66" text-anchor="middle" font-size="42" fill="#263238">猴</text><text x="66" y="96" text-anchor="middle" font-size="18" fill="#66737a">犬部</text></g>
+        <g transform="translate(234 42)"><rect width="132" height="110" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="66" y="66" text-anchor="middle" font-size="42" fill="#263238">病</text><text x="66" y="96" text-anchor="middle" font-size="18" fill="#66737a">疒部</text></g>
+        <g transform="translate(412 42)"><rect width="132" height="110" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="66" y="66" text-anchor="middle" font-size="42" fill="#263238">體</text><text x="66" y="96" text-anchor="middle" font-size="18" fill="#66737a">骨部</text></g>
+        <g transform="translate(612 58)"><circle cx="42" cy="42" r="36" fill="#ffd76a"/><path d="M92 98 C64 74 62 45 82 28 C114 54 128 78 126 112Z" fill="#4f8a56"/></g>
+      </svg>`,
+    family: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="昔字魔法樹">
+        <rect width="820" height="210" fill="#f6f2ea"/><path d="M392 70 C342 72 306 106 304 150 L514 150 C506 104 470 70 392 70Z" fill="#8ecf98"/>
+        <rect x="384" y="108" width="42" height="62" rx="8" fill="#8a5a3c"/><circle cx="404" cy="82" r="42" fill="#4f8a56"/>
+        <text x="404" y="94" text-anchor="middle" font-size="44" fill="#fff8e8">昔</text>
+        <g fill="#fff8e8" stroke="#d8e2de" stroke-width="4"><rect x="126" y="50" width="92" height="62" rx="8"/><rect x="260" y="18" width="92" height="62" rx="8"/><rect x="502" y="20" width="92" height="62" rx="8"/><rect x="636" y="50" width="92" height="62" rx="8"/></g>
+        <g fill="#176672" font-size="34" text-anchor="middle"><text x="172" y="91">借</text><text x="306" y="59">醋</text><text x="548" y="61">錯</text><text x="682" y="91">惜</text></g>
+        <path d="M218 86 L360 86 M352 58 L360 86 L352 114 M502 86 L448 86 M456 58 L448 86 L456 114" stroke="#efbd55" stroke-width="7" fill="none" stroke-linecap="round"/>
+      </svg>`,
+    tone: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="一定和可能語氣判斷">
+        <rect width="820" height="210" fill="#eaf6f5"/><circle cx="130" cy="110" r="54" fill="#ffd76a"/><circle cx="690" cy="110" r="54" fill="#d8e2de"/>
+        <g transform="translate(226 46)"><rect width="150" height="86" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><path d="M48 84 L32 118 L82 84Z" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="75" y="55" text-anchor="middle" font-size="32" fill="#4f8a56">一定</text></g>
+        <g transform="translate(442 46)"><rect width="150" height="86" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><path d="M104 84 L120 118 L70 84Z" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/><text x="75" y="55" text-anchor="middle" font-size="32" fill="#6650a4">可能</text></g>
+        <text x="410" y="174" text-anchor="middle" font-size="22" fill="#66737a">確定和不確定，語氣不一樣</text>
+      </svg>`,
+    sentence: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="除了都句型小橋">
+        <rect width="820" height="210" fill="#fff8e8"/><path d="M0 168 C140 120 260 190 410 150 C550 112 670 130 820 104 L820 210 L0 210Z" fill="#9dd8dd"/>
+        <path d="M158 138 C260 62 550 62 662 138" fill="none" stroke="#b77a4b" stroke-width="20" stroke-linecap="round"/>
+        <path d="M156 134 C260 76 550 76 664 134" fill="none" stroke="#efbd55" stroke-width="7" stroke-linecap="round"/>
+        <g><rect x="172" y="52" width="128" height="58" rx="8" fill="#fff" stroke="#d8e2de" stroke-width="4"/><text x="236" y="91" text-anchor="middle" font-size="28" fill="#c54b4b">除了</text></g>
+        <g><rect x="518" y="52" width="128" height="58" rx="8" fill="#fff" stroke="#d8e2de" stroke-width="4"/><text x="582" y="91" text-anchor="middle" font-size="28" fill="#4f8a56">都</text></g>
+      </svg>`,
+    listen: `
+      <svg viewBox="0 0 820 210" role="img" aria-label="家明打電話關心智文">
+        <rect width="820" height="210" fill="#eef7f7"/><rect x="66" y="48" width="248" height="116" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/>
+        <rect x="506" y="48" width="248" height="116" rx="8" fill="#fff8e8" stroke="#d8e2de" stroke-width="4"/>
+        <circle cx="152" cy="103" r="28" fill="#ffd76a"/><rect x="132" y="132" width="44" height="26" rx="12" fill="#3c78a8"/>
+        <circle cx="592" cy="103" r="28" fill="#ffd76a"/><path d="M566 105 C580 116 604 116 618 105" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+        <path d="M310 102 C366 62 454 62 510 102" fill="none" stroke="#2f8f9d" stroke-width="8" stroke-dasharray="14 12" stroke-linecap="round"/>
+        <text x="190" y="83" text-anchor="middle" font-size="22" fill="#176672">家明</text><text x="630" y="83" text-anchor="middle" font-size="22" fill="#176672">智文</text>
+        <text x="410" y="152" text-anchor="middle" font-size="24" fill="#66737a">打電話關心朋友</text>
+      </svg>`
+  };
+  levelVisual.innerHTML = scenes[level.id];
+}
+
 function renderOrder(level) {
   orderState = level.shuffled.map((index) => level.items[index]);
   const list = document.createElement("div");
-  list.className = "play-area";
+  list.className = "order-list";
+  list.setAttribute("aria-label", "故事排序卡片");
   orderState.forEach((text, index) => list.appendChild(createOrderCard(text, index)));
   playArea.appendChild(list);
 }
@@ -247,6 +359,8 @@ function renderOrder(level) {
 function createOrderCard(text, index) {
   const card = document.createElement("div");
   card.className = "order-card";
+  card.draggable = true;
+  card.dataset.index = index;
   card.innerHTML = `<strong>${index + 1}</strong><span>${text}</span>`;
   const controls = document.createElement("div");
   controls.className = "order-buttons";
@@ -258,17 +372,36 @@ function createOrderCard(text, index) {
   down.addEventListener("click", () => moveOrder(index, 1));
   controls.append(up, down);
   card.appendChild(controls);
+  card.addEventListener("dragstart", () => {
+    draggedIndex = index;
+    card.classList.add("is-dragging");
+  });
+  card.addEventListener("dragend", () => {
+    draggedIndex = null;
+    card.classList.remove("is-dragging");
+  });
+  card.addEventListener("dragover", (event) => event.preventDefault());
+  card.addEventListener("drop", (event) => {
+    event.preventDefault();
+    const targetIndex = Number(card.dataset.index);
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+    const [moved] = orderState.splice(draggedIndex, 1);
+    orderState.splice(targetIndex, 0, moved);
+    redrawOrder();
+  });
   return card;
 }
 
 function moveOrder(index, direction) {
   const nextIndex = index + direction;
   [orderState[index], orderState[nextIndex]] = [orderState[nextIndex], orderState[index]];
-  playArea.innerHTML = "";
-  const list = document.createElement("div");
-  list.className = "play-area";
+  redrawOrder();
+}
+
+function redrawOrder() {
+  const list = playArea.querySelector(".order-list");
+  list.innerHTML = "";
   orderState.forEach((text, itemIndex) => list.appendChild(createOrderCard(text, itemIndex)));
-  playArea.appendChild(list);
 }
 
 function iconButton(text, label) {
@@ -282,8 +415,6 @@ function iconButton(text, label) {
 }
 
 function renderMatch(level) {
-  const layout = document.createElement("div");
-  layout.className = "match-layout";
   const list = document.createElement("div");
   list.className = "match-list";
   level.pairs.forEach(([word]) => {
@@ -293,8 +424,7 @@ function renderMatch(level) {
     row.appendChild(createSelect(level.options));
     list.appendChild(row);
   });
-  layout.appendChild(list);
-  playArea.appendChild(layout);
+  playArea.appendChild(list);
 }
 
 function renderFamily(level) {
@@ -327,7 +457,7 @@ function createSelect(options) {
 
 function renderQuiz(level) {
   const wrapper = document.createElement("div");
-  wrapper.className = "play-area";
+  wrapper.className = "quiz-list";
   level.questions.forEach((question, index) => {
     const group = document.createElement("div");
     group.className = "choice-group";
@@ -378,13 +508,14 @@ function renderSentence(level) {
 function addWord(chip, word) {
   if (chip.disabled) return;
   chip.disabled = true;
-  sentenceState.push(word);
+  const id = `${word}-${Math.random().toString(36).slice(2)}`;
+  sentenceState.push({ id, word });
   const item = document.createElement("button");
   item.className = "word-chip selected";
   item.type = "button";
   item.textContent = word;
   item.addEventListener("click", () => {
-    sentenceState = sentenceState.filter((value, index) => index !== sentenceState.indexOf(word));
+    sentenceState = sentenceState.filter((value) => value.id !== id);
     chip.disabled = false;
     item.remove();
   });
@@ -413,13 +544,17 @@ function checkAnswer() {
   }
 
   if (level.type === "sentence") {
-    correct = sentenceState.join("") === level.answer.join("");
+    correct = sentenceState.map((item) => item.word).join("") === level.answer.join("");
   }
 
-  answered = correct;
   if (correct) {
-    score += 10;
-    scoreLabel.textContent = `${score} 分`;
+    answered = true;
+    if (!completed.has(level.id)) {
+      completed.add(level.id);
+      score += 10;
+    }
+    renderScore();
+    renderTrail();
     feedback.textContent = `答對了！森林朋友又往小池塘靠近一步。學習重點：${level.summary}`;
     feedback.className = "feedback good";
     nextButton.disabled = false;
@@ -438,12 +573,18 @@ function showHint() {
 }
 
 function nextLevel() {
-  current += 1;
-  if (current >= levels.length) {
-    showResult();
-  } else {
+  const nextUnfinished = levels.findIndex((level, index) => index > current && !completed.has(level.id));
+  if (nextUnfinished >= 0) {
+    current = nextUnfinished;
     renderLevel();
+    return;
   }
+  if (completed.size >= levels.length) {
+    showResult();
+    return;
+  }
+  current = (current + 1) % levels.length;
+  renderLevel();
 }
 
 function showResult() {
@@ -464,7 +605,7 @@ function showResult() {
   resultGrid.innerHTML = "";
   [
     ["總分", `${score}/${maxScore}`],
-    ["完成關卡", `${Math.round(score / 10)}/${levels.length}`],
+    ["完成關卡", `${completed.size}/${levels.length}`],
     ["學習主題", "6"]
   ].forEach(([label, value]) => {
     const item = document.createElement("div");
