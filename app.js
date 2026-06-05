@@ -4,6 +4,7 @@ const levels = [
     title: "故事排序",
     prompt: "把〈月光河〉的故事排成正確順序。",
     hint: "先找背景，再找小白兔生病，最後是大家幫他看見月亮。",
+    summary: "故事排序要抓住起因、經過和結果，讀故事時可以先找時間和事件順序。",
     items: [
       "很久很久以前，有一條神祕的河，月圓時會出現很多圓圓的月亮。",
       "月圓那天，除了小白兔沒有來，其他動物都來了。",
@@ -19,6 +20,7 @@ const levels = [
     title: "部首連連看",
     prompt: "選出每個生字正確的部首。",
     hint: "猴的部首是犬部，病看起來像病床，所以是疒部。",
+    summary: "部首能幫我們理解字義，例如犬部常和動物有關，疒部常和生病有關。",
     pairs: [
       ["祕", "示部"],
       ["猴", "犬部"],
@@ -34,6 +36,7 @@ const levels = [
     title: "昔字家族",
     prompt: "把「昔」加上正確部首，變成句子需要的字。",
     hint: "可惜的惜有心情，弄錯的錯和金屬旁有關。",
+    summary: "同一個字件加上不同部首，會變成不同的字，也常帶出不同意思。",
     pairs: [
       ["阿姨向媽媽__用廚房。", "借"],
       ["她弄__醬油和黑醋。", "錯"],
@@ -47,6 +50,7 @@ const levels = [
     title: "語氣判斷",
     prompt: "讀句子，選出比較適合的詞語。",
     hint: "一定表示很確定；可能表示不確定。",
+    summary: "「一定」表示很確定，「可能」表示還不確定，說話語氣不一樣。",
     questions: [
       {
         text: "哥哥已經報名了，他____會參加說故事比賽。",
@@ -70,6 +74,7 @@ const levels = [
     title: "句子重組",
     prompt: "用「除了……都……」把句子排好。",
     hint: "句型是：除了 + 特別的人或事，其他的人 + 都 + 做某件事。",
+    summary: "「除了……都……」可以說出一個例外，再說其他人或事都有相同情況。",
     answer: ["除了", "文欣", "生病請假", "我們", "都", "參加了運動會"],
     bank: ["都", "生病請假", "文欣", "參加了運動會", "除了", "我們"]
   },
@@ -78,6 +83,7 @@ const levels = [
     title: "聆聽理解",
     prompt: "根據家明打電話給智文的情境，回答問題。",
     hint: "想一想：誰沒來上學？誰打電話關心朋友？",
+    summary: "聆聽時要抓住人物、原因和行動，才能知道故事中誰在關心誰。",
     questions: [
       {
         text: "是誰主動打電話給對方？",
@@ -98,7 +104,16 @@ const levels = [
   }
 ];
 
+const storyText = [
+  "很久很久以前，有一條神祕的河。每到月圓的那一天，河裡就會出現很多圓圓的月亮，森林裡的動物們都叫它月光河。",
+  "月圓的那一天，除了小白兔沒有來，其他的動物都來了，小猴子說他生病了。大家說：小白兔一定很難過，我們去探望他。",
+  "小白兔看見大家都來了，欣喜的說：謝謝你們來看我，我的身體好多了。可惜今天晚上，我卻無法看到月光河裡的月亮。",
+  "動物們想了一個好辦法，在院子裡挖了一個大坑之後，再請小象到月光河邊，用鼻子吸水，一次又一次，直到院子裡的坑成了一個小池塘。",
+  "池塘裡也有很多圓圓的月亮，和月光河的一模一樣。小白兔很高興，跟大家在小池塘邊，度過了快樂的夜晚。"
+].join(" ");
+
 const startButton = document.querySelector("#start-button");
+const storyButton = document.querySelector("#story-button");
 const restartButton = document.querySelector("#restart-button");
 const gamePanel = document.querySelector("#game-panel");
 const resultPanel = document.querySelector("#result-panel");
@@ -115,14 +130,18 @@ const checkButton = document.querySelector("#check-button");
 const nextButton = document.querySelector("#next-button");
 const resultCopy = document.querySelector("#result-copy");
 const resultGrid = document.querySelector("#result-grid");
+const confettiLayer = document.querySelector("#confetti-layer");
 
 let current = 0;
 let score = 0;
 let answered = false;
 let orderState = [];
 let sentenceState = [];
+let audioContext;
+let storySpeaking = false;
 
 function startGame() {
+  stopStory();
   current = 0;
   score = 0;
   answered = false;
@@ -130,6 +149,70 @@ function startGame() {
   resultPanel.hidden = true;
   gamePanel.hidden = false;
   renderLevel();
+}
+
+function toggleStory() {
+  if (!("speechSynthesis" in window)) {
+    storyButton.textContent = "瀏覽器不支援朗讀";
+    return;
+  }
+
+  if (storySpeaking) {
+    stopStory();
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(storyText);
+  utterance.lang = "zh-TW";
+  utterance.rate = 0.88;
+  utterance.pitch = 1.05;
+  utterance.onend = () => {
+    storySpeaking = false;
+    storyButton.textContent = "先聽故事";
+  };
+  utterance.onerror = () => {
+    storySpeaking = false;
+    storyButton.textContent = "先聽故事";
+  };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+  storySpeaking = true;
+  storyButton.textContent = "停止朗讀";
+}
+
+function stopStory() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  storySpeaking = false;
+  if (storyButton) storyButton.textContent = "先聽故事";
+}
+
+function playTone(kind) {
+  try {
+    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioContext.currentTime;
+    const tones = {
+      correct: [523.25, 659.25, 783.99],
+      wrong: [220, 174.61],
+      complete: [523.25, 659.25, 783.99, 1046.5]
+    }[kind];
+    tones.forEach((frequency, index) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = kind === "wrong" ? "triangle" : "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, now + index * 0.11);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + index * 0.11 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.11 + 0.12);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(now + index * 0.11);
+      oscillator.stop(now + index * 0.11 + 0.14);
+    });
+  } catch (error) {
+    // Audio is optional; ignore browsers that block it.
+  }
 }
 
 function renderLevel() {
@@ -337,13 +420,15 @@ function checkAnswer() {
   if (correct) {
     score += 10;
     scoreLabel.textContent = `${score} 分`;
-    feedback.textContent = "答對了！森林朋友又往小池塘靠近一步。";
+    feedback.textContent = `答對了！森林朋友又往小池塘靠近一步。學習重點：${level.summary}`;
     feedback.className = "feedback good";
     nextButton.disabled = false;
     checkButton.disabled = true;
+    playTone("correct");
   } else {
     feedback.textContent = "還差一點點，再讀一次題目和提示，重新調整看看。";
     feedback.className = "feedback try";
+    playTone("wrong");
   }
 }
 
@@ -365,14 +450,21 @@ function showResult() {
   gamePanel.hidden = true;
   resultPanel.hidden = false;
   progressFill.style.width = "100%";
-  const perfect = score === levels.length * 10;
-  resultCopy.textContent = perfect
-    ? "太棒了，你完成所有挑戰，也把月亮帶到小白兔的院子裡。"
-    : "你完成了月光河任務，可以再玩一次，把每一關都點亮。";
+  playTone("complete");
+  launchConfetti();
+  const maxScore = levels.length * 10;
+  const ratio = score / maxScore;
+  if (ratio === 1) {
+    resultCopy.textContent = "滿分！你不只完成挑戰，也把月亮穩穩帶到小白兔的院子裡。";
+  } else if (ratio >= 0.7) {
+    resultCopy.textContent = "很棒！你已經掌握大部分重點，再挑戰一次就有機會讓整條月光河都亮起來。";
+  } else {
+    resultCopy.textContent = "你完成了月光河任務。可以先聽一次故事，再回來把每一關慢慢點亮。";
+  }
   resultGrid.innerHTML = "";
   [
-    ["總分", `${score}`],
-    ["完成關卡", `${levels.length}`],
+    ["總分", `${score}/${maxScore}`],
+    ["完成關卡", `${Math.round(score / 10)}/${levels.length}`],
     ["學習主題", "6"]
   ].forEach(([label, value]) => {
     const item = document.createElement("div");
@@ -382,7 +474,22 @@ function showResult() {
   });
 }
 
+function launchConfetti() {
+  confettiLayer.innerHTML = "";
+  const colors = ["#ffd76a", "#4f8a56", "#2f8f9d", "#c54b4b", "#6650a4", "#fffaf2"];
+  for (let index = 0; index < 34; index += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[index % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.35}s`;
+    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    confettiLayer.appendChild(piece);
+  }
+}
+
 startButton.addEventListener("click", startGame);
+storyButton.addEventListener("click", toggleStory);
 restartButton.addEventListener("click", startGame);
 hintButton.addEventListener("click", showHint);
 checkButton.addEventListener("click", checkAnswer);
