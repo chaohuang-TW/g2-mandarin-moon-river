@@ -6,7 +6,8 @@
     <meta
       name="description"
       content="國小二年級下學期國語第七課〈月光河〉互動學習練習頁面。">
-    <title>月光河互動小遊戲</title>
+    <title>月光河互動練習</title>
+    <link rel="stylesheet" href="../assets/css/course-platform.css">
     <style>
       :root {
         color-scheme: light;
@@ -350,7 +351,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-course-id="moon-river">
     <main class="shell">
       <div class="topbar">
         <a class="back-link" href="../">← 回課程目錄</a>
@@ -360,7 +361,7 @@
       <section class="hero" id="hero" aria-labelledby="game-title">
         <div class="hero-copy">
           <p class="label">國小二下國語第七課</p>
-          <h1 id="game-title">月光河互動小遊戲</h1>
+          <h1 id="game-title">月光河互動練習</h1>
           <p class="intro">
             以〈月光河〉為素材，練習課文順序、部首、字族、語氣詞、句型與聆聽理解。
           </p>
@@ -676,5 +677,6 @@
       checkButton.addEventListener("click", check);
       nextButton.addEventListener("click", next);
     </script>
+    <script src="../assets/js/course-platform.js"></script>
   </body>
 </html>

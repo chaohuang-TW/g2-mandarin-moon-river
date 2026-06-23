@@ -1,0 +1,49 @@
+.course-platform-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.course-platform-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: inherit;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.course-platform-link:hover {
+  transform: translateY(-2px);
+}
+
+.course-platform-skills,
+.course-platform-summary {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 2px solid currentColor;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.course-platform-skills h2,
+.course-platform-summary h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.course-platform-skills ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+.course-platform-summary p {
+  margin: 0;
+  line-height: 1.8;
+}
